@@ -42,6 +42,16 @@ static BOOL __iOS5;
     return self;
 }
 
+- (id)initWithRootViewController:(UIViewController *)viewController
+{
+    self = [super init];
+    if (self) {
+        [self initialize];
+        self.mainNavigationController.viewControllers = @[viewController];
+    }
+    return self;
+}
+
 - (void)initialize
 {
     static dispatch_once_t onceToken;
@@ -80,7 +90,7 @@ static BOOL __iOS5;
     self.hideButton.hidden = YES;
     self.hideButton.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
     [self.hideButton addTarget:self
-                        action:@selector(hideSideViewController)
+                        action:@selector(hideSubViewController)
               forControlEvents:UIControlEventTouchUpInside];
     
     [self.view addSubview:self.hideButton];
@@ -160,7 +170,7 @@ static BOOL __iOS5;
            animated:YES
          completion:^{
              self.mainNavigationController.viewControllers = @[ viewController ];
-             [self hideSideViewControllerAnimated:YES];
+             [self hideSubViewControllerAnimated:YES];
          }];
 }
 
@@ -168,8 +178,8 @@ static BOOL __iOS5;
                       direction:(ISRevealControllerDirection)direction
                        animated:(BOOL)animated
 {
-    [self removeSideViewController:self.subViewController];
-    [self insertSideViewController:viewController];
+    [self removeSubViewController:self.subViewController];
+    [self insertSubViewController:viewController];
     [self setRevealDirection:direction
                     animated:animated
                   completion:nil];
@@ -177,17 +187,17 @@ static BOOL __iOS5;
     self.subViewController = viewController;
 }
 
-- (void)hideSideViewController
+- (void)hideSubViewController
 {
-    [self hideSideViewControllerAnimated:YES];
+    [self hideSubViewControllerAnimated:YES];
 }
 
-- (void)hideSideViewControllerAnimated:(BOOL)animated
+- (void)hideSubViewControllerAnimated:(BOOL)animated
 {
     [self setRevealDirection:ISRevealControllerDirectionNeutral
                     animated:animated
                   completion:^{
-                      [self removeSideViewController:self.subViewController];
+                      [self removeSubViewController:self.subViewController];
                       self.subViewController = nil;
                   }];
 }
@@ -251,7 +261,7 @@ static BOOL __iOS5;
 
 #pragma mark - manage child viewcontrollers
 
-- (void)removeSideViewController:(UIViewController *)viewController
+- (void)removeSubViewController:(UIViewController *)viewController
 {
     if (__iOS5) {
         [viewController willMoveToParentViewController:nil];
@@ -264,7 +274,7 @@ static BOOL __iOS5;
     }
 }
 
-- (void)insertSideViewController:(UIViewController *)viewController
+- (void)insertSubViewController:(UIViewController *)viewController
 {
     if (viewController.wantsFullScreenLayout) {
         viewController.view.frame = [UIScreen mainScreen].bounds;

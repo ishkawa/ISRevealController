@@ -13,12 +13,13 @@ typedef enum {
 @property (readonly, nonatomic, retain) UIViewController *subViewController;
 @property (readonly, nonatomic) ISRevealControllerDirection revealDirection;
 
+- (id)initWithRootViewController:(UIViewController *)viewController;
 - (void)setMainViewController:(UIViewController *)viewController animated:(BOOL)animated;
 - (void)revealSubViewController:(UIViewController *)viewController
                       direction:(ISRevealControllerDirection)direction
                        animated:(BOOL)animted;
 
-- (void)hideSideViewControllerAnimated:(BOOL)animated;
+- (void)hideSubViewControllerAnimated:(BOOL)animated;
 - (void)setFullOffsetEnabled:(BOOL)enabled
                     animated:(BOOL)animated
                   completion:(void (^)(void))completion;

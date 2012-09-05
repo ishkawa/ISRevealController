@@ -13,8 +13,8 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     ISCenterViewController *viewController = [[[ISCenterViewController alloc] init] autorelease];
-    ISRevealController *revealController = [[[ISRevealController alloc] init] autorelease];
-    revealController.mainNavigationController.viewControllers = @[viewController];
+    ISRevealController *revealController =
+    [[[ISRevealController alloc] initWithRootViewController:viewController] autorelease];
     
     UINavigationController *navigationController = [[[UINavigationController alloc] init] autorelease];
     navigationController.navigationBarHidden = YES;
