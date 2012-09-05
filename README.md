@@ -36,7 +36,7 @@ UIViewController *subViewController = [[[UIViewController alloc] init] autorelea
 
 ## UIViewController extension
 
-`revealController` property is added in `UIViewController+Reveal.h`, and it will set automatically.
+`revealController` property is added in `UIViewController+Reveal.h`, and it will be set automatically.  
 so you don't have to set `viewController.revealController` manually. 
 
 ```objectivec
