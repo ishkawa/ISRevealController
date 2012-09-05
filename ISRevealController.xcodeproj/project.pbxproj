@@ -80,6 +80,7 @@
 				77B5E56315F661E000E96961 /* ISRightViewController.h */,
 				77B5E56415F661E000E96961 /* ISRightViewController.m */,
 				77B5E56515F661E000E96961 /* ISRightViewController.xib */,
+				77B5E56615F661E000E96961 /* ISViewController.h */,
 				77B5E56715F661E000E96961 /* ISViewController.m */,
 				77B5E56815F661E000E96961 /* main.m */,
 				77B5E57415F661EB00E96961 /* Supporting Files */,
@@ -93,7 +94,6 @@
 				77B5E55715F661E000E96961 /* InfoPlist.strings */,
 				77B5E56115F661E000E96961 /* ISRevealController-Info.plist */,
 				77B5E56215F661E000E96961 /* ISRevealController-Prefix.pch */,
-				77B5E56615F661E000E96961 /* ISViewController.h */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -281,6 +281,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "DemoApp/ISRevealController-Prefix.pch";
 				INFOPLIST_FILE = "DemoApp/ISRevealController-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -292,6 +293,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "DemoApp/ISRevealController-Prefix.pch";
 				INFOPLIST_FILE = "DemoApp/ISRevealController-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};

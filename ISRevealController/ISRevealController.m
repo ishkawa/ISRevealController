@@ -3,6 +3,13 @@
 #define OFFSET   280.f
 #define DURATION 0.25f
 
+@interface UIViewController ()
+
+@property (nonatomic) UIViewController *parentViewController;
+
+@end
+
+
 @interface ISRevealController ()
 
 @property (nonatomic, retain) UINavigationController *mainNavigationController;
@@ -37,17 +44,22 @@ static BOOL __iOS5;
 
 - (void)initialize
 {
-    self.fullOffsetEnabled = NO;
-    self.wantsFullScreenLayout = YES;
-    self.revealDirection = ISRevealControllerDirectionNeutral;
-    self.mainNavigationController = [[[UINavigationController alloc] init] autorelease];
-    [self addChildViewController:self.mainNavigationController];
-    [self.mainNavigationController didMoveToParentViewController:self];
-    
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         __iOS5 = ([[UIDevice currentDevice].systemVersion floatValue] >= 5.0);
     });
+    
+    self.fullOffsetEnabled = NO;
+    self.wantsFullScreenLayout = YES;
+    self.revealDirection = ISRevealControllerDirectionNeutral;
+    self.mainNavigationController = [[[UINavigationController alloc] init] autorelease];
+    
+    if (__iOS5) {
+        [self addChildViewController:self.mainNavigationController];
+        [self.mainNavigationController didMoveToParentViewController:self];
+    } else {
+        self.mainNavigationController.parentViewController = self;
+    }
 }
 
 - (void)viewDidLoad
@@ -86,6 +98,7 @@ static BOOL __iOS5;
 {
     [super viewWillAppear:animated];
     if (!__iOS5) {
+        [self.mainNavigationController viewWillAppear:animated];
         [self.subViewController viewWillAppear:animated];
     }
 }
@@ -94,6 +107,7 @@ static BOOL __iOS5;
 {
     [super viewDidAppear:animated];
     if (!__iOS5) {
+        [self.mainNavigationController viewDidAppear:animated];
         [self.subViewController viewDidAppear:animated];
     }
 }
@@ -101,6 +115,7 @@ static BOOL __iOS5;
 - (void)viewWillDisappear:(BOOL)animated
 {
     if (!__iOS5) {
+        [self.mainNavigationController viewWillDisappear:animated];
         [self.subViewController viewWillDisappear:animated];
     }
     [super viewWillDisappear:animated];
@@ -109,9 +124,25 @@ static BOOL __iOS5;
 - (void)viewDidDisappear:(BOOL)animated
 {
     if (!__iOS5) {
+        [self.mainNavigationController viewDidDisappear:animated];
         [self.subViewController viewDidDisappear:animated];
     }
     [super viewDidDisappear:animated];
+}
+
+- (void)viewDidUnload
+{
+    self.hideButton = nil;
+    [super viewDidUnload];
+}
+
+- (void)dealloc
+{
+    [_mainNavigationController release];
+    [_subViewController release];
+    [_hideButton release];
+    
+    [super dealloc];
 }
 
 #pragma mark -
@@ -197,9 +228,6 @@ static BOOL __iOS5;
         animations();
         completion(YES);
     }
-    
-    Block_release(animations);
-    Block_release(completion);
 }
 
 - (void)setRevealDirection:(ISRevealControllerDirection)revealDirection
@@ -249,6 +277,8 @@ static BOOL __iOS5;
         [self addChildViewController:viewController];
         [viewController didMoveToParentViewController:self];
     } else {
+        viewController.parentViewController = self;
+        
         [viewController viewWillAppear:NO];
         [self.view insertSubview:viewController.view belowSubview:self.mainNavigationController.view];
         [viewController viewDidAppear:NO];
