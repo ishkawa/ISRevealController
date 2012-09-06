@@ -15,6 +15,7 @@
 @property (nonatomic, retain) UINavigationController *mainNavigationController;
 @property (nonatomic, retain) UIViewController *subViewController;
 @property (nonatomic, retain) UIButton *hideButton;
+@property (nonatomic, retain) UIScrollView *mainScrollView;
 @property (nonatomic) ISRevealControllerDirection revealDirection;
 @property (nonatomic) BOOL fullOffsetEnabled;
 
@@ -178,6 +179,23 @@ static BOOL __iOS5;
                       direction:(ISRevealControllerDirection)direction
                        animated:(BOOL)animated
 {
+    if (direction == ISRevealControllerDirectionNeutral) {
+        NSLog(@"invalid direction");
+        return;
+    }
+    
+    // TODO: find recursively and remember all?
+    for (UIView *subview in [self.mainNavigationController.visibleViewController.view subviews]) {
+        if ([subview isKindOfClass:[UIScrollView class]]) {
+            UIScrollView *scrollView = (UIScrollView *)subview;
+            if (scrollView.scrollsToTop) {
+                self.mainScrollView = scrollView;
+                self.mainScrollView.scrollsToTop = NO;
+                break;
+            }
+        }
+    }
+    
     [self removeSubViewController:self.subViewController];
     [self insertSubViewController:viewController];
     [self setRevealDirection:direction
@@ -194,6 +212,9 @@ static BOOL __iOS5;
 
 - (void)hideSubViewControllerAnimated:(BOOL)animated
 {
+    self.mainScrollView.scrollsToTop = YES;
+    self.mainScrollView = nil;
+    
     [self setRevealDirection:ISRevealControllerDirectionNeutral
                     animated:animated
                   completion:^{
