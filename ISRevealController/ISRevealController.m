@@ -1,6 +1,7 @@
 #import "ISRevealController.h"
+#import <QuartzCore/QuartzCore.h>
 
-#define OFFSET   280.f
+#define OFFSET   268.f
 #define DURATION 0.25f
 
 @interface UIViewController ()
@@ -85,7 +86,20 @@ static BOOL __iOS5;
             self.subViewController.view.frame = [UIScreen mainScreen].applicationFrame;
         }
     }
-    [self.view addSubview:self.mainNavigationController.view];
+
+    UIView *mainView = self.mainNavigationController.view;
+    CGFloat extension = 5.f;
+    CGRect frame = CGRectMake(mainView.frame.origin.x-extension,
+                              mainView.frame.origin.y-extension,
+                              mainView.frame.size.width+extension*2,
+                              mainView.frame.size.height+extension*2);
+    
+    UIBezierPath *path = [UIBezierPath bezierPathWithRect:frame];
+    mainView.layer.shadowOpacity = .5f;
+    mainView.layer.shadowColor = [UIColor blackColor].CGColor;
+    mainView.layer.shadowPath = path.CGPath;
+    mainView.layer.shadowOffset = CGSizeMake(0, 0);
+    [self.view addSubview:mainView];
     
     self.hideButton = [UIButton buttonWithType:UIButtonTypeCustom];
     self.hideButton.hidden = YES;
