@@ -11,7 +11,7 @@
 @end
 
 
-@interface ISRevealController () <UIGestureRecognizerDelegate>
+@interface ISRevealController ()
 
 @property (nonatomic, retain) UINavigationController *mainNavigationController;
 @property (nonatomic, retain) UIViewController *subViewController;
@@ -89,7 +89,11 @@ static BOOL __iOS5;
     }
     
     UIPanGestureRecognizer *recognizer = [[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(didPanned:)] autorelease];
-    recognizer.delegate = self;
+    [recognizer addObserver:self
+                 forKeyPath:@"state"
+                    options:NSKeyValueObservingOptionNew
+                    context:nil];
+    
     [self.view addGestureRecognizer:recognizer];
 
     UIView *mainView = self.mainNavigationController.view;
@@ -175,25 +179,54 @@ static BOOL __iOS5;
     [super dealloc];
 }
 
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([object isKindOfClass:[UIPanGestureRecognizer class]]) {
+        UIPanGestureRecognizer *recognizer = (UIPanGestureRecognizer *)object;
+        if (recognizer.state == UIGestureRecognizerStateBegan) {
+            self.panDirection = ISRevealControllerDirectionNeutral;
+        }
+        if (recognizer.state == UIGestureRecognizerStateEnded) {
+            [UIView animateWithDuration:.3f
+                             animations:^{
+                                 self.mainNavigationController.view.frame =
+                                 CGRectMake(0, 0,
+                                            self.view.frame.size.width,
+                                            self.view.frame.size.height);
+                             }];
+            self.hideButton.hidden = YES;
+        }
+    }
+}
+
 #pragma mark - 
 
 - (void)didPanned:(UIPanGestureRecognizer *)recognizer
 {
+    static CGPoint viewOrigin;
+    static CGPoint touchOrigin;
+    
+    if (self.panDirection != ISRevealControllerDirectionNeutral && recognizer.state != UIGestureRecognizerStateEnded) {
+        CGPoint point = [recognizer locationInView:self.view];
+        
+        self.mainNavigationController.view.frame =
+        CGRectMake(viewOrigin.x + (point.x - touchOrigin.x),
+                   self.mainNavigationController.view.frame.origin.y,
+                   self.mainNavigationController.view.frame.size.width,
+                   self.mainNavigationController.view.frame.size.height);
+        return;
+    }
+    
     CGPoint velocity = [recognizer velocityInView:self.view];
     if (velocity.x > 100 && fabs(velocity.x) > fabs(velocity.y) && self.panDirection != ISRevealControllerDirectionLeft) {
         self.panDirection = ISRevealControllerDirectionLeft;
-        NSLog(@"left");
     }
     if (velocity.x < -100 && fabs(velocity.x) > fabs(velocity.y) && self.panDirection != ISRevealControllerDirectionRight) {
         self.panDirection = ISRevealControllerDirectionRight;
-        NSLog(@"right");
     }
-}
-
-- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
-{
-    self.panDirection = ISRevealControllerDirectionNeutral;
-    return YES;
+    
+    touchOrigin = [recognizer locationInView:self.view];
+    viewOrigin  = self.mainNavigationController.view.frame.origin;
 }
 
 #pragma mark -
