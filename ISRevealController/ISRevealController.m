@@ -11,13 +11,14 @@
 @end
 
 
-@interface ISRevealController ()
+@interface ISRevealController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, retain) UINavigationController *mainNavigationController;
 @property (nonatomic, retain) UIViewController *subViewController;
 @property (nonatomic, retain) UIButton *hideButton;
 @property (nonatomic, retain) UIScrollView *mainScrollView;
 @property (nonatomic) ISRevealControllerDirection revealDirection;
+@property (nonatomic) ISRevealControllerDirection panDirection;
 @property (nonatomic) BOOL fullOffsetEnabled;
 
 @end
@@ -86,6 +87,10 @@ static BOOL __iOS5;
             self.subViewController.view.frame = [UIScreen mainScreen].applicationFrame;
         }
     }
+    
+    UIPanGestureRecognizer *recognizer = [[[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(didPanned:)] autorelease];
+    recognizer.delegate = self;
+    [self.view addGestureRecognizer:recognizer];
 
     UIView *mainView = self.mainNavigationController.view;
     CGFloat extension = 5.f;
@@ -168,6 +173,27 @@ static BOOL __iOS5;
     [_hideButton release];
     
     [super dealloc];
+}
+
+#pragma mark - 
+
+- (void)didPanned:(UIPanGestureRecognizer *)recognizer
+{
+    CGPoint velocity = [recognizer velocityInView:self.view];
+    if (velocity.x > 100 && fabs(velocity.x) > fabs(velocity.y) && self.panDirection != ISRevealControllerDirectionLeft) {
+        self.panDirection = ISRevealControllerDirectionLeft;
+        NSLog(@"left");
+    }
+    if (velocity.x < -100 && fabs(velocity.x) > fabs(velocity.y) && self.panDirection != ISRevealControllerDirectionRight) {
+        self.panDirection = ISRevealControllerDirectionRight;
+        NSLog(@"right");
+    }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    self.panDirection = ISRevealControllerDirectionNeutral;
+    return YES;
 }
 
 #pragma mark -
