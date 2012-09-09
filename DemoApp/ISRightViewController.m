@@ -89,9 +89,18 @@
     ISRevealController *revealController = [[[ISRevealController alloc] init] autorelease];
     
     revealController.mainNavigationController.viewControllers = @[centerViewController];
-    centerViewController.navigationItem.leftBarButtonItem.action = @selector(pop);
+    revealController.delegate = centerViewController;
+    revealController.panOption = ISRevealControllerPanOptionRightEnabled;
+    
+    UIButton *button = [UIButton buttonWithType:101];
+    [button setTitle:@"Back" forState:UIControlStateNormal];
+    [button addTarget:centerViewController
+               action:@selector(pop)
+     forControlEvents:UIControlEventTouchUpInside];
+    
+    centerViewController.navigationItem.leftBarButtonItem = [[[UIBarButtonItem alloc] initWithCustomView:button] autorelease];
     centerViewController.value = indexPath.row;
-
+    
     [self.navigationController pushViewController:revealController animated:YES];
 }
 

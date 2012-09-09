@@ -91,26 +91,49 @@
 
 - (void)openLeftView
 {
-    ISLeftViewController *viewController = [[[ISLeftViewController alloc] init] autorelease];
-    UINavigationController *navigationController = [[[UINavigationController alloc] initWithRootViewController:viewController] autorelease];
-    navigationController.navigationBar.tintColor = [UIColor blackColor];
-    
-    [self.revealController revealSubViewController:navigationController
+    [self.revealController revealSubViewController:[self leftViewController]
                                          direction:ISRevealControllerDirectionLeft
                                           animated:YES];
 }
 
 - (void)openRightView
 {
-    ISRightViewController *viewController = [[[ISRightViewController alloc] init] autorelease];
-    [self.revealController revealSubViewController:viewController
+    [self.revealController revealSubViewController:[self rightViewController]
                                          direction:ISRevealControllerDirectionRight
                                           animated:YES];
+}
+
+- (UIViewController *)leftViewController
+{
+    ISLeftViewController *viewController = [[[ISLeftViewController alloc] init] autorelease];
+    UINavigationController *navigationController = [[[UINavigationController alloc] initWithRootViewController:viewController] autorelease];
+    navigationController.navigationBar.tintColor = [UIColor blackColor];
+    
+    return navigationController;
+}
+
+- (UIViewController *)rightViewController
+{
+    ISRightViewController *viewController = [[[ISRightViewController alloc] init] autorelease];
+    
+    return viewController;
 }
 
 - (void)pop
 {
     [self.navigationController.parentViewController.navigationController popViewControllerAnimated:YES];
+}
+
+#pragma mark - reveal controller delegate
+
+- (void)revealController:(ISRevealController *)revealController didPanToDirection:(ISRevealControllerDirection)direction
+{
+    if (direction == ISRevealControllerDirectionLeft) {
+        [self.revealController setSubViewController:[self leftViewController] direction:ISRevealControllerDirectionLeft];
+    }
+    if (direction == ISRevealControllerDirectionRight) {
+        [self.revealController setSubViewController:[self rightViewController] direction:ISRevealControllerDirectionRight];
+    }
 }
 
 @end
