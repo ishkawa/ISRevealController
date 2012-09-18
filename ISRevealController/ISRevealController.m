@@ -349,6 +349,7 @@ static BOOL __iOS5;
     CGFloat sign = self.revealDirection == ISRevealControllerDirectionLeft ? 1.f : -1.f;
     CGFloat width = self.view.frame.size.width;
     
+    self.subViewController.view.userInteractionEnabled = NO;
     [self setOffset:sign * width
            animated:YES
          completion:^{
