@@ -13,8 +13,9 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     ISCenterViewController *viewController = [[[ISCenterViewController alloc] init] autorelease];
-    ISRevealController *revealController =
-    [[[ISRevealController alloc] initWithRootViewController:viewController] autorelease];
+    ISRevealController *revealController = [[[ISRevealController alloc] initWithRootViewController:viewController] autorelease];
+    revealController.delegate = viewController;
+    revealController.panOption = (ISRevealControllerPanOptionLeftEnabled|ISRevealControllerPanOptionRightEnabled);
     
     UINavigationController *navigationController = [[[UINavigationController alloc] init] autorelease];
     navigationController.navigationBarHidden = YES;

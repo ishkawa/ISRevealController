@@ -17,8 +17,16 @@
 @property (nonatomic, retain) UIViewController *subViewController;
 @property (nonatomic, retain) UIButton *hideButton;
 @property (nonatomic, retain) UIScrollView *mainScrollView;
+@property (nonatomic, retain) UIPanGestureRecognizer *panRecognizer;
 @property (nonatomic) ISRevealControllerDirection revealDirection;
+@property (nonatomic) ISRevealControllerDirection panDirection;
 @property (nonatomic) BOOL fullOffsetEnabled;
+
+@property (nonatomic) CGPoint viewOrigin;
+@property (nonatomic) CGPoint touchOrigin;
+@property (nonatomic) CGPoint touchVelocity;
+@property (nonatomic) NSTimeInterval touchTimestamp;
+@property (nonatomic) NSTimeInterval touchInterval;
 
 @end
 
@@ -50,6 +58,7 @@ static BOOL __iOS5;
     if (self) {
         [self initialize];
         self.mainNavigationController.viewControllers = @[viewController];
+        self.panOption = ISRevealControllerPanOptionDisabled;
     }
     return self;
 }
@@ -65,6 +74,13 @@ static BOOL __iOS5;
     self.wantsFullScreenLayout = YES;
     self.revealDirection = ISRevealControllerDirectionNeutral;
     self.mainNavigationController = [[[UINavigationController alloc] init] autorelease];
+    
+    self.panRecognizer = [[[UIPanGestureRecognizer alloc] init] autorelease];
+    [self.panRecognizer addTarget:self action:@selector(didPanned:)];
+    [self.panRecognizer addObserver:self
+                         forKeyPath:@"state"
+                            options:NSKeyValueObservingOptionNew
+                            context:nil];
     
     if (__iOS5) {
         [self addChildViewController:self.mainNavigationController];
@@ -86,6 +102,8 @@ static BOOL __iOS5;
             self.subViewController.view.frame = [UIScreen mainScreen].applicationFrame;
         }
     }
+    
+    [self.view addGestureRecognizer:self.panRecognizer];
 
     UIView *mainView = self.mainNavigationController.view;
     CGFloat extension = 5.f;
@@ -155,6 +173,12 @@ static BOOL __iOS5;
     [super viewDidDisappear:animated];
 }
 
+- (void)viewWillUnload
+{
+    [self.view removeGestureRecognizer:self.panRecognizer];
+    [super viewWillUnload];
+}
+
 - (void)viewDidUnload
 {
     self.hideButton = nil;
@@ -163,11 +187,155 @@ static BOOL __iOS5;
 
 - (void)dealloc
 {
+    [self.panRecognizer removeObserver:self forKeyPath:@"state"];
+    
     [_mainNavigationController release];
     [_subViewController release];
     [_hideButton release];
     
     [super dealloc];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if ([object isKindOfClass:[UIPanGestureRecognizer class]]) {
+        UIPanGestureRecognizer *recognizer = (UIPanGestureRecognizer *)object;
+        
+        if (recognizer.state == UIGestureRecognizerStateBegan) {
+            self.panDirection = ISRevealControllerDirectionNeutral;
+        }
+            
+        if (recognizer.state == UIGestureRecognizerStateEnded) {
+            
+            if (self.panDirection == ISRevealControllerDirectionNeutral) {
+                [self hideSubViewControllerAnimated:YES];
+            } else {
+                if (self.panDirection != self.revealDirection) {
+                    self.revealDirection = ISRevealControllerDirectionNeutral;
+                    [self animateOnInertiaWithHandler:^{
+                        [self hideSubViewControllerAnimated:YES];
+                    }];
+                } else {
+                    [self animateOnInertiaWithHandler:^{
+                        [self setRevealDirection:self.revealDirection
+                                        animated:YES
+                                      completion:nil];
+                    }];
+                }
+            }
+        }
+    }
+}
+
+- (void)animateOnInertiaWithHandler:(void (^)(void))handler
+{
+    CGFloat width  = self.mainNavigationController.view.frame.size.width -20;
+    CGFloat origin = self.mainNavigationController.view.frame.origin.x;
+    CGFloat destination;
+    
+    switch (self.revealDirection) {
+        case ISRevealControllerDirectionNeutral: destination = 0.f; break;
+        case ISRevealControllerDirectionLeft:    destination = width; break;
+        case ISRevealControllerDirectionRight:   destination = -width; break;
+    }
+    NSTimeInterval duration = fabs((destination - origin)/self.touchVelocity.x);
+    if (duration < .1f) {
+        duration = .1f;
+    }
+    if (duration < .3f) {
+        [UIView animateWithDuration:duration
+                         animations:^{
+                             self.mainNavigationController.view.frame =
+                             CGRectMake(destination,
+                                        self.mainNavigationController.view.frame.origin.y,
+                                        self.mainNavigationController.view.frame.size.width,
+                                        self.mainNavigationController.view.frame.size.height);
+                         }
+                         completion:^(BOOL finished) {
+                             if (handler) {
+                                 handler();
+                             }
+                         }];
+    } else {
+        if (handler) {
+            handler();
+        }
+    }
+}
+
+#pragma mark -
+
+- (void)didPanned:(UIPanGestureRecognizer *)recognizer
+{
+    NSTimeInterval timestamp = [[recognizer valueForKey:@"_lastTouchTime"] floatValue];
+    
+    self.touchVelocity  = [recognizer velocityInView:self.view];
+    self.touchInterval  = timestamp - self.touchInterval;
+    self.touchTimestamp = timestamp;
+    
+    if (self.panDirection != ISRevealControllerDirectionNeutral) {
+        if (recognizer.state != UIGestureRecognizerStateEnded) {
+            CGPoint point = [recognizer locationInView:self.view];
+            CGFloat dx = point.x - self.touchOrigin.x;
+            CGFloat ratio = OFFSET/self.mainNavigationController.view.frame.size.width;
+            
+            self.mainNavigationController.view.frame =
+            CGRectMake(self.viewOrigin.x + dx*ratio,
+                       self.mainNavigationController.view.frame.origin.y,
+                       self.mainNavigationController.view.frame.size.width,
+                       self.mainNavigationController.view.frame.size.height);
+
+            if (self.panDirection == ISRevealControllerDirectionLeft && self.touchVelocity.x < -100) {
+                self.panDirection = ISRevealControllerDirectionRight;
+            }
+            if (self.panDirection == ISRevealControllerDirectionRight && self.touchVelocity.x > 100) {
+                self.panDirection = ISRevealControllerDirectionLeft;
+            }
+            
+            if (self.revealDirection == ISRevealControllerDirectionLeft && self.mainNavigationController.view.frame.origin.x < 0) {
+                [self hideSubViewControllerAnimated:NO];
+                self.revealDirection = self.panDirection;
+                
+                if ([self.delegate respondsToSelector:@selector(revealController:didPanToDirection:)]) {
+                    [self.delegate revealController:self didPanToDirection:self.panDirection];
+                }
+            }
+            else if (self.revealDirection == ISRevealControllerDirectionRight && self.mainNavigationController.view.frame.origin.x > 0) {
+                [self hideSubViewControllerAnimated:NO];
+                self.revealDirection = self.panDirection;
+                
+                if ([self.delegate respondsToSelector:@selector(revealController:didPanToDirection:)]) {
+                    [self.delegate revealController:self didPanToDirection:self.panDirection];
+                }
+            }
+        }
+        
+        return;
+    }
+    
+    CGPoint velocity = self.touchVelocity;
+    if (velocity.x > 100 && fabs(velocity.x) > fabs(velocity.y)) {
+        if (self.revealDirection == ISRevealControllerDirectionNeutral && !(self.panOption & ISRevealControllerPanOptionLeftEnabled)) {
+            return;
+        }
+        self.panDirection = ISRevealControllerDirectionLeft;
+    }
+    if (velocity.x < -100 && fabs(velocity.x) > fabs(velocity.y)) {
+        if (self.revealDirection == ISRevealControllerDirectionNeutral && !(self.panOption & ISRevealControllerPanOptionRightEnabled)) {
+            return;
+        }
+        self.panDirection = ISRevealControllerDirectionRight;
+    }
+    
+    if (self.panDirection != ISRevealControllerDirectionNeutral) {
+        self.touchOrigin   = [recognizer locationInView:self.view];
+        self.viewOrigin    = self.mainNavigationController.view.frame.origin;
+
+        BOOL isImplemented = [self.delegate respondsToSelector:@selector(revealController:didPanToDirection:)];
+        if (isImplemented && !self.subViewController) {
+            [self.delegate revealController:self didPanToDirection:self.panDirection];
+        }
+    }
 }
 
 #pragma mark -
@@ -181,12 +349,41 @@ static BOOL __iOS5;
     CGFloat sign = self.revealDirection == ISRevealControllerDirectionLeft ? 1.f : -1.f;
     CGFloat width = self.view.frame.size.width;
     
+    self.subViewController.view.userInteractionEnabled = NO;
     [self setOffset:sign * width
            animated:YES
          completion:^{
              self.mainNavigationController.viewControllers = @[ viewController ];
              [self hideSubViewControllerAnimated:YES];
          }];
+}
+
+- (void)setSubViewController:(UIViewController *)viewController direction:(ISRevealControllerDirection)direction
+{
+    // FIXME: duplicated (revealSubViewController:direction:animated:)
+    
+    if (direction == ISRevealControllerDirectionNeutral) {
+        NSLog(@"invalid direction");
+        return;
+    }
+    
+    // TODO: find recursively and remember all?
+    for (UIView *subview in [self.mainNavigationController.visibleViewController.view subviews]) {
+        if ([subview isKindOfClass:[UIScrollView class]]) {
+            UIScrollView *scrollView = (UIScrollView *)subview;
+            if (scrollView.scrollsToTop) {
+                self.mainScrollView = scrollView;
+                self.mainScrollView.scrollsToTop = NO;
+                break;
+            }
+        }
+    }
+    
+    [self removeSubViewController:self.subViewController];
+    [self insertSubViewController:viewController];
+    
+    self.subViewController = viewController;
+    self.revealDirection = direction;
 }
 
 - (void)revealSubViewController:(UIViewController *)viewController
@@ -217,6 +414,11 @@ static BOOL __iOS5;
                   completion:nil];
     
     self.subViewController = viewController;
+}
+
+- (void)putSubViewController:(UIViewController *)viewController
+                   direction:(ISRevealControllerDirection)direction
+{
 }
 
 - (void)hideSubViewController
