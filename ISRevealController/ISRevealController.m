@@ -4,13 +4,6 @@
 #define OFFSET   268.f
 #define DURATION 0.25f
 
-@interface UIViewController ()
-
-@property (nonatomic) UIViewController *parentViewController;
-
-@end
-
-
 @interface ISRevealController ()
 
 @property (nonatomic, retain) UINavigationController *mainNavigationController;
@@ -86,7 +79,7 @@ static BOOL __iOS5;
         [self addChildViewController:self.mainNavigationController];
         [self.mainNavigationController didMoveToParentViewController:self];
     } else {
-        self.mainNavigationController.parentViewController = self;
+        [self.mainNavigationController setValue:self forKey:@"_parentViewController"];
     }
 }
 
@@ -524,8 +517,7 @@ static BOOL __iOS5;
         [self addChildViewController:viewController];
         [viewController didMoveToParentViewController:self];
     } else {
-        viewController.parentViewController = self;
-        
+        [viewController setValue:self forKey:@"_parentViewController"];
         [viewController viewWillAppear:NO];
         [self.view insertSubview:viewController.view belowSubview:self.mainNavigationController.view];
         [viewController viewDidAppear:NO];
