@@ -64,7 +64,6 @@ static BOOL __iOS5;
     });
     
     self.fullOffsetEnabled = NO;
-    self.wantsFullScreenLayout = YES;
     self.revealDirection = ISRevealControllerDirectionNeutral;
     self.mainNavigationController = [[[UINavigationController alloc] init] autorelease];
     
@@ -89,11 +88,7 @@ static BOOL __iOS5;
     
     if (self.subViewController) {
         [self.view addSubview:self.subViewController.view];
-        if (self.subViewController.wantsFullScreenLayout) {
-            self.subViewController.view.frame = [UIScreen mainScreen].bounds;
-        } else {
-            self.subViewController.view.frame = [UIScreen mainScreen].applicationFrame;
-        }
+        self.subViewController.view.frame = [UIScreen mainScreen].bounds;
     }
     
     [self.view addGestureRecognizer:self.panRecognizer];
@@ -506,11 +501,7 @@ static BOOL __iOS5;
 
 - (void)insertSubViewController:(UIViewController *)viewController
 {
-    if (viewController.wantsFullScreenLayout) {
-        viewController.view.frame = [UIScreen mainScreen].bounds;
-    } else {
-        viewController.view.frame = [UIScreen mainScreen].applicationFrame;
-    }
+    viewController.view.frame = [UIScreen mainScreen].bounds;
     
     if (__iOS5) {
         [self.view insertSubview:viewController.view belowSubview:self.mainNavigationController.view];

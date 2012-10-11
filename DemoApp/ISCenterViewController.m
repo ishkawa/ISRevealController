@@ -106,10 +106,8 @@
 - (UIViewController *)leftViewController
 {
     ISLeftViewController *viewController = [[[ISLeftViewController alloc] init] autorelease];
-    UINavigationController *navigationController = [[[UINavigationController alloc] initWithRootViewController:viewController] autorelease];
-    navigationController.navigationBar.tintColor = [UIColor blackColor];
     
-    return navigationController;
+    return viewController;
 }
 
 - (UIViewController *)rightViewController
