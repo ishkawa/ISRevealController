@@ -278,11 +278,13 @@
 		77E6536D15F63D7800CB8A6A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: Yosuke Ishikawa (64EH2X9ZN9)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "DemoApp/ISRevealController-Prefix.pch";
 				INFOPLIST_FILE = "DemoApp/ISRevealController-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "E0C9D86D-401A-466F-9CDC-A65DB3D37187";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
